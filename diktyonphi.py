@@ -1,6 +1,7 @@
 import enum
 import subprocess
 from typing import Dict, Hashable, Any, Optional, Iterator, Tuple
+from collections import deque
 
 class GraphType(enum.Enum):
     """Graph orientation type: directed or undirected."""
@@ -433,9 +434,48 @@ def je_stromem(graf):
         print("Graf obsahuje cyklus, není strom.")
         return False
 
+    if len(navstivene) != len(graf):
+        print("Graf není souvislý, není strom.")
+        return False
+
+
     print("Graf je strom.")
     return True
 
+def nejkratsi_cesta(graf, start_id, cil_id):
+    queue = deque()
+    queue.append((start_id, [start_id]))
+    navstivene = set()
+
+    while queue:
+        aktualni, cesta = queue.popleft()
+        if aktualni == cil_id:
+            return cesta
+        if aktualni in navstivene:
+            continue
+        navstivene.add(aktualni)
+        node = graf.node(aktualni)
+        for soused in node.neighbor_ids:
+            if soused not in navstivene:
+                queue.append((soused, cesta + [soused]))
+    return None
+
+def nejdelsi_cesta(graf, start_id, cil_id):
+    nejdelsi = []
+
+    def dfs(aktualni, cil_id, cesta, navstivene):
+        nonlocal nejdelsi
+        if aktualni == cil_id:
+            if len(cesta) > len(nejdelsi):
+                nejdelsi = list(cesta)
+            return
+        node = graf.node(aktualni)
+        for soused in node.neighbor_ids:
+            if soused not in navstivene:
+                dfs(soused, cil_id, cesta + [soused], navstivene | {soused})
+
+    dfs(start_id, cil_id, [start_id], {start_id})
+    return nejdelsi if nejdelsi else None
 
 if __name__ == "__main__":
 
@@ -517,17 +557,17 @@ if __name__ == "__main__":
     # g.export_to_png("graf.png")
     # g.izolovany_graf()
 
-    # tree = Graph(GraphType.UNDIRECTED)
-    # tree.add_edge(1, 2)
-    # tree.add_edge(1, 7)
-    # tree.add_edge(2, 3)
-    # tree.add_edge(2, 4)
-    # tree.add_edge(2, 5)
-    # tree.add_edge(5, 6)
-    # #aby vznikl cyklus:
-    # tree.add_edge(4, 6)
-    # tree.export_to_png("graf.png")
-    # print(je_stromem(tree))
+    tree = Graph(GraphType.UNDIRECTED)
+    tree.add_edge(1, 2)
+    tree.add_edge(1, 7)
+    tree.add_edge(2, 3)
+    tree.add_edge(2, 4)
+    tree.add_edge(2, 5)
+    tree.add_edge(5, 6)
+    #aby vznikl cyklus:
+    #tree.add_edge(4, 6)
+    tree.export_to_png("graf.png")
+    print(je_stromem(tree))
 
     #g = uplny_graf(4) # vrací graf vpravo
     #g.export_to_png("graf.png")
